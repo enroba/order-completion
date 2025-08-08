@@ -1,0 +1,573 @@
+<body>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Enroba Orders</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f0f4f8;
+      color: #2c3e50;
+    }
+
+    h1 {
+      text-align: center;
+      color: #1abc9c;
+      font-size: 26px;
+      margin-bottom: 25px;
+      letter-spacing: 1px;
+    }
+
+    #search-container {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    #search-input {
+      width: 100%;
+      max-width: 500px;
+      padding: 12px 16px;
+      font-size: 16px;
+      border: 2px solid #1abc9c;
+      border-radius: 10px;
+      outline: none;
+      transition: 0.3s ease;
+    }
+
+    #search-input:focus {
+      border-color: #16a085;
+      box-shadow: 0 0 10px rgba(22, 160, 133, 0.3);
+    }
+
+    .order {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+      margin-bottom: 25px;
+      transition: transform 0.2s ease;
+    }
+
+    .order:hover {
+      transform: scale(1.01);
+    }
+
+    .order h2 {
+      font-size: 18px;
+      margin-bottom: 12px;
+      color: #1abc9c;
+      letter-spacing: 0.5px;
+    }
+
+    .order p {
+      margin: 10px 0;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .order p strong {
+      display: block;
+      color: #34495e;
+      margin-bottom: 2px;
+    }
+
+    .copy-btn {
+      margin-top: 6px;
+      padding: 6px 14px;
+      font-size: 14px;
+      border: none;
+      background-color: #1abc9c;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+
+    .copy-btn:hover {
+      background-color: #16a085;
+    }
+
+    .label-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .label-link a {
+      background: #1abc9c;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 600;
+      box-shadow: 0 3px 8px rgba(26,188,156,0.3);
+      transition: 0.3s ease;
+    }
+
+    .label-link a:hover {
+      background-color: #16a085;
+      box-shadow: 0 5px 12px rgba(22,160,133,0.4);
+    }
+
+    .mark-complete-btn {
+      padding: 8px 16px;
+      font-size: 14px;
+      border: none;
+      background-color: #27ae60;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      box-shadow: 0 3px 8px rgba(39,174,96,0.4);
+      transition: 0.3s ease;
+    }
+
+    .mark-complete-btn:hover:not(:disabled) {
+      background-color: #219150;
+      box-shadow: 0 5px 12px rgba(33,145,80,0.5);
+    }
+
+    .mark-complete-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .address-block {
+      background: #ecfdf5;
+      border-left: 4px solid #1abc9c;
+      padding: 10px 12px;
+      margin-top: 6px;
+      border-radius: 6px;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #2c3e50;
+      white-space: pre-line;
+      word-wrap: break-word;
+    }
+
+    #spinner {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      margin: 40px 0;
+      color: #555;
+    }
+
+    .loader {
+      border: 6px solid #e0e0e0;
+      border-top: 6px solid #1abc9c;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin-bottom: 12px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+
+    }
+
+#refresh-button {
+  display: none;
+  margin: 0 auto 30px auto; /* already includes bottom margin of 30px */
+  padding: 10px 22px;
+  background: #1abc9c;
+  color: white;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(26,188,156,0.4);
+  transition: 0.3s ease;
+}
+
+
+    #refresh-button:hover {
+      background: #16a085;
+    }
+
+    /* New styles for inline fields */
+    .field-inline {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 10px 0;
+      font-size: 15px;
+    }
+
+    .field-inline strong {
+      min-width: 90px; /* label width */
+      color: #34495e;
+    }
+
+    .copy-btn-inline {
+      margin: 0;
+      padding: 4px 10px;
+      font-size: 13px;
+      border-radius: 6px;
+      cursor: pointer;
+      background-color: #1abc9c;
+      color: white;
+      border: none;
+      transition: 0.3s ease;
+    }
+
+    .copy-btn-inline:hover {
+      background-color: #16a085;
+    }
+
+    .flex-row {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin: 10px 0;
+      font-size: 15px;
+    }
+
+    .flex-row > p {
+      margin: 0;
+      white-space: nowrap;
+    }
+
+    .flex-row strong {
+      color: #34495e;
+      min-width: 110px;
+      display: inline-block;
+    }
+
+    /* ✅ Responsive Fix for Mobile */
+    @media (max-width: 500px) {
+      body {
+        padding: 12px;
+      }
+
+      h1 {
+        font-size: 20px;
+        margin-bottom: 20px;
+      }
+
+      #search-input {
+        width: 100%;
+        font-size: 14px;
+        padding: 10px 14px;
+        border-radius: 8px;
+      }
+
+      .order {
+        padding: 15px;
+        margin-bottom: 18px;
+        border-radius: 10px;
+      }
+
+      .order h2 {
+        font-size: 16px;
+      }
+
+      .order p {
+        font-size: 14px;
+      }
+
+      .address-block {
+        font-size: 13px;
+        padding: 8px 10px;
+        border-radius: 5px;
+      }
+
+      .copy-btn {
+        font-size: 13px;
+        padding: 5px 10px;
+        margin-top: 4px;
+      }
+
+      .copy-btn-inline {
+        font-size: 12px;
+        padding: 4px 8px;
+      }
+
+      .label-link a {
+        font-size: 13px;
+        padding: 7px 12px;
+        border-radius: 5px;
+      }
+
+      .mark-complete-btn {
+        font-size: 13px;
+        padding: 7px 12px;
+      }
+
+      #refresh-button {
+        font-size: 14px;
+        padding: 8px 16px;
+        margin-bottom: 70px;
+      }
+    }
+  </style>
+
+
+
+  <h1>Enroba Order Completion</h1>
+
+  <div id="search-container">
+    <input type="search" id="search-input" placeholder="🔍 Search by address, courier, brand..." autocomplete="off" disabled>
+  </div>
+
+  <div id="spinner" aria-live="polite">
+    <div class="loader" aria-hidden="true"></div>
+    <p>Loading orders, please wait...</p>
+  </div>
+
+  <div id="orders" style="display:none;"></div>
+
+  <button id="refresh-button">🔄 Refresh Orders</button>
+
+  <script>
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwy6otpLST30pWsEbIUS2kfNacUK12UwMnOv0XKu2zvmDLME03Nm4TrCQfLQgLkAyLn/exec';
+
+    let allOrders = [];
+    let filteredOrders = [];
+
+    function createAddressHtml(address) {
+      if (!address || address.trim() === '') return '';
+      const formatted = address.replace(/\n/g, '<br>');
+      return `
+        <p>
+          <strong>Delivery Address:</strong>
+          <div class="address-block">
+            <span class="copy-text">${formatted}</span><br>
+            <button class="copy-btn" type="button" data-copy-value="${address}">📋 Copy</button>
+          </div>
+        </p>`;
+    }
+
+    function createOrderElement(order, index) {
+      const orderDiv = document.createElement('div');
+      orderDiv.classList.add('order');
+
+      let html = `<h2>${index + 1}. Order #${order['Order Number']}</h2>`;
+      html += createAddressHtml(order['Delivery Address']);
+
+      // Country inline with copy button
+      if (order['Country']) {
+        html += `
+          <div class="field-inline">
+            <strong>Country:</strong>
+            <span>${order['Country']}</span>
+          </div>
+        `;
+      }
+
+      // Quantity, Courier, Order Status in one horizontal row
+      html += `
+        <div class="flex-row">
+          <p><strong>Quantity:</strong> ${order['Quantity']}</p>
+          <p><strong>Courier:</strong> ${order['Courier']}</p>
+          <p class="order-status"><strong>Order Status:</strong> ${order['Order Status']}</p>
+        </div>
+      `;
+
+      // Other fields vertically
+      if (order['Brand Name']) {
+        html += `<p><strong>Brand Name:</strong> ${order['Brand Name']}</p>`;
+      }
+      if (order['Dress Name / SKU']) {
+        html += `<p><strong>Dress Name / SKU:</strong> ${order['Dress Name / SKU']}</p>`;
+      }
+      if (order['Notes']) {
+        html += `<p><strong>Notes:</strong> ${order['Notes']}</p>`;
+      }
+
+const isShipped = order['Order Status'] && order['Order Status'].toLowerCase() === 'shipped';
+const completeBtnHTML = `
+  <button
+    class="mark-complete-btn"
+    type="button"
+    data-order-number="${order['Order Number']}"
+    ${isShipped ? 'disabled' : ''}
+  >
+    ${isShipped ? '✅ Marked Complete' : 'Mark as Complete'}
+  </button>
+`;
+
+if (order['Label URL'] && order['Label URL'].trim() !== '') {
+  html += `
+    <p class="label-link">
+      <a href="${order['Label URL']}" target="_blank">📎 Download Label</a>
+      ${completeBtnHTML}
+    </p>
+  `;
+} else {
+  html += `
+    <p>
+      ${completeBtnHTML}
+    </p>
+  `;
+}
+
+
+      orderDiv.innerHTML = html;
+
+      // Attach copy event listeners for all copy buttons
+      orderDiv.querySelectorAll('.copy-btn, .copy-btn-inline').forEach(button => {
+        button.addEventListener('click', () => {
+          const textToCopy = button.getAttribute('data-copy-value');
+          if (!navigator.clipboard) {
+            const textarea = document.createElement('textarea');
+            textarea.value = textToCopy;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+              document.execCommand('copy');
+              alert('Copied to clipboard!');
+            } catch {
+              alert('Failed to copy');
+            }
+            document.body.removeChild(textarea);
+          } else {
+            navigator.clipboard.writeText(textToCopy).then(() => {
+              button.textContent = '✅ Copied!';
+              setTimeout(() => {
+                button.textContent = '📋 Copy';
+              }, 1200);
+            }, () => {
+              alert('Failed to copy');
+            });
+          }
+        });
+      });
+
+      // Attach event for Mark as Complete button
+      orderDiv.querySelectorAll('.mark-complete-btn').forEach(button => {
+        button.addEventListener('click', async () => {
+          const orderNumber = button.getAttribute('data-order-number');
+          button.disabled = true;
+          button.textContent = 'Updating...';
+
+          try {
+            const formData = new URLSearchParams();
+            formData.append('action', 'updateStatus');
+            formData.append('orderNumber', orderNumber);
+            formData.append('newStatus', 'Shipped');
+
+            const updateResponse = await fetch(API_URL, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+              },
+              body: formData.toString(),
+            });
+
+            if (!updateResponse.ok) throw new Error('Network response was not ok');
+
+            const result = await updateResponse.json();
+
+            if (result.success) {
+              // Update Order Status text in the UI
+              const statusP = orderDiv.querySelector('.order-status');
+              if (statusP) {
+                statusP.innerHTML = '<strong>Order Status:</strong> Shipped';
+              }
+              button.textContent = '✅ Marked Complete';
+            } else {
+              throw new Error(result.message || 'Failed to update order status');
+            }
+          } catch (err) {
+            alert('Error updating order status: ' + err.message);
+            button.disabled = false;
+            button.textContent = 'Mark as Complete';
+          }
+        });
+      });
+
+      return orderDiv;
+    }
+
+    function renderOrders(orders) {
+      const container = document.getElementById('orders');
+      container.innerHTML = '';
+
+      if (orders.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color:#888;">No orders found.</p>';
+        return;
+      }
+
+      orders.forEach((order, idx) => {
+        const orderEl = createOrderElement(order, idx);
+        container.appendChild(orderEl);
+      });
+    }
+
+    function filterOrders(query) {
+      if (!query) return allOrders;
+      const lowerQuery = query.toLowerCase();
+      return allOrders.filter(order => {
+        return Object.values(order).some(value =>
+          value && value.toString().toLowerCase().includes(lowerQuery)
+        );
+      });
+    }
+
+    async function fetchOrders() {
+      const spinner = document.getElementById('spinner');
+      const container = document.getElementById('orders');
+      const searchInput = document.getElementById('search-input');
+      const refreshBtn = document.getElementById('refresh-button');
+
+      spinner.style.display = 'flex';
+      container.style.display = 'none';
+      searchInput.disabled = true;
+      refreshBtn.style.display = 'none';
+
+      try {
+        const response = await fetch(API_URL);
+        if (!response.ok) throw new Error('Network error');
+        const data = await response.json();
+
+        const requiredFields = ['Order Number', 'Delivery Address', 'Country', 'Brand Name', 'Dress Name / SKU', 'Quantity', 'Courier', 'Order Status'];
+        allOrders = data.filter(order => {
+          return !requiredFields.some(field => !order[field] || order[field].toString().trim() === '');
+        });
+
+        filteredOrders = allOrders;
+        spinner.style.display = 'none';
+        container.style.display = 'block';
+        searchInput.disabled = false;
+        refreshBtn.style.display = 'inline-block';
+
+        renderOrders(filteredOrders);
+      } catch (error) {
+        spinner.style.display = 'none';
+        container.style.display = 'block';
+        container.innerHTML = `<p style="text-align:center; color:#e74c3c;">Failed to load orders. Please try again.</p>`;
+        refreshBtn.style.display = 'inline-block';
+        searchInput.disabled = true;
+      }
+    }
+
+    document.getElementById('search-input').addEventListener('input', e => {
+      filteredOrders = filterOrders(e.target.value);
+      renderOrders(filteredOrders);
+    });
+
+    document.getElementById('refresh-button').addEventListener('click', () => {
+      fetchOrders();
+    });
+
+    fetchOrders();
+  </script>
+
+
+</body>
