@@ -1,5 +1,6 @@
-<body>
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Enroba Orders</title>
@@ -209,7 +210,6 @@
     #refresh-button {
       display: none;
       margin: 0 auto 30px auto;
-      /* already includes bottom margin of 30px */
       padding: 10px 22px;
       background: #1abc9c;
       color: white;
@@ -238,7 +238,6 @@
 
     .field-inline strong {
       min-width: 90px;
-      /* label width */
       color: #34495e;
     }
 
@@ -343,39 +342,89 @@
         margin-bottom: 70px;
       }
     }
+
+    /* === Sticky Top Bar & Filter Styles === */
+    #top-bar {
+      position: sticky;
+      top: 0;
+      background-color: #f0f4f8;
+      padding: 10px 0;
+      z-index: 1000;
+    }
+
+    #filter-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 15px;
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+      padding: 0 20px;
+    }
+
+    #filter-select {
+      padding: 10px 16px;
+      font-size: 15px;
+      border-radius: 8px;
+      border: 2px solid #1abc9c;
+      background-color: #fff;
+      color: #2c3e50;
+      cursor: pointer;
+    }
+
+    @media (max-width: 500px) {
+      #filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
   </style>
+</head>
 
+<body>
+  <!-- Sticky Top Bar -->
+  <div id="top-bar" role="banner" aria-label="Order controls and filter">
+    <h1>Enroba Order Completion</h1>
 
+    <div id="filter-bar">
+      <div id="order-counts" aria-live="polite" aria-atomic="true">
+        <span class="pending">Pending: 0</span>
+        <span class="shipped">Shipped: 0</span>
+      </div>
 
-  <h1>Enroba Order Completion</h1>
-
-  <!-- New container for counts -->
-  <div id="order-counts" aria-live="polite" aria-atomic="true">
-    <span class="pending">Pending: 0</span>
-    <span class="shipped">Shipped: 0</span>
+      <select id="filter-select" aria-label="Filter orders by status">
+        <option value="all">All</option>
+        <option value="pending">Pending</option>
+        <option value="shipped">Shipped</option>
+      </select>
+    </div>
   </div>
 
   <div id="search-container">
-    <input type="search" id="search-input" placeholder="🔍 Search by address, courier, brand..." autocomplete="off" disabled />
+    <input type="search" id="search-input" placeholder="🔍 Search by address, courier, brand..." autocomplete="off" disabled aria-label="Search orders" />
   </div>
 
-  <div id="spinner" aria-live="polite">
+  <div id="spinner" aria-live="polite" aria-busy="true">
     <div class="loader" aria-hidden="true"></div>
     <p>Loading orders, please wait...</p>
   </div>
 
   <div id="orders" style="display:none;"></div>
 
-  <button id="refresh-button">🔄 Refresh Orders</button>
+  <button id="refresh-button" aria-label="Refresh orders">🔄 Refresh Orders</button>
 
   <script>
-    const API_URL =
-      'https://script.google.com/macros/s/AKfycbwy6otpLST30pWsEbIUS2kfNacUK12UwMnOv0XKu2zvmDLME03Nm4TrCQfLQgLkAyLn/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwy6otpLST30pWsEbIUS2kfNacUK12UwMnOv0XKu2zvmDLME03Nm4TrCQfLQgLkAyLn/exec';
 
     let allOrders = [];
     let filteredOrders = [];
 
     const orderCountsEl = document.getElementById('order-counts');
+    const filterSelectEl = document.getElementById('filter-select');
+    const searchInputEl = document.getElementById('search-input');
 
     function createAddressHtml(address) {
       if (!address || address.trim() === '') return '';
@@ -397,7 +446,6 @@
       let html = `<h2>${index + 1}. Order #${order['Order Number']}</h2>`;
       html += createAddressHtml(order['Delivery Address']);
 
-      // Country inline with copy button
       if (order['Country']) {
         html += `
           <div class="field-inline">
@@ -407,7 +455,6 @@
         `;
       }
 
-      // Quantity, Courier, Order Status in one horizontal row
       html += `
         <div class="flex-row">
           <p><strong>Quantity:</strong> ${order['Quantity']}</p>
@@ -416,7 +463,6 @@
         </div>
       `;
 
-      // Other fields vertically
       if (order['Brand Name']) {
         html += `<p><strong>Brand Name:</strong> ${order['Brand Name']}</p>`;
       }
@@ -427,42 +473,38 @@
         html += `<p><strong>Notes:</strong> ${order['Notes']}</p>`;
       }
 
-      const isShipped =
-        order['Order Status'] &&
-        order['Order Status'].toLowerCase() === 'shipped';
+      const isShipped = order['Order Status'] && order['Order Status'].toLowerCase() === 'shipped';
       const completeBtnHTML = `
-  <button
-    class="mark-complete-btn"
-    type="button"
-    data-order-number="${order['Order Number']}"
-    ${isShipped ? 'disabled' : ''}
-  >
-    ${isShipped ? '✅ Marked Complete' : 'Mark as Complete'}
-  </button>
-`;
+        <button
+          class="mark-complete-btn"
+          type="button"
+          data-order-number="${order['Order Number']}"
+          ${isShipped ? 'disabled' : ''}
+        >
+          ${isShipped ? '✅ Marked Complete' : 'Mark as Complete'}
+        </button>`;
 
       if (order['Label URL'] && order['Label URL'].trim() !== '') {
         html += `
-    <p class="label-link">
-      <a href="${order['Label URL']}" target="_blank">📎 Download Label</a>
-      ${completeBtnHTML}
-    </p>
-  `;
+          <p class="label-link">
+            <a href="${order['Label URL']}" target="_blank" rel="noopener noreferrer">📎 Download Label</a>
+            ${completeBtnHTML}
+          </p>
+        `;
       } else {
         html += `
-    <p>
-      ${completeBtnHTML}
-    </p>
-  `;
+          <p>${completeBtnHTML}</p>
+        `;
       }
 
       orderDiv.innerHTML = html;
 
-      // Attach copy event listeners for all copy buttons
+      // Copy buttons
       orderDiv.querySelectorAll('.copy-btn, .copy-btn-inline').forEach((button) => {
         button.addEventListener('click', () => {
           const textToCopy = button.getAttribute('data-copy-value');
           if (!navigator.clipboard) {
+            // fallback for old browsers
             const textarea = document.createElement('textarea');
             textarea.value = textToCopy;
             document.body.appendChild(textarea);
@@ -475,25 +517,27 @@
             }
             document.body.removeChild(textarea);
           } else {
-            navigator.clipboard
-              .writeText(textToCopy)
-              .then(() => {
-                button.textContent = '✅ Copied!';
-                setTimeout(() => {
-                  button.textContent = '📋 Copy';
-                }, 1200);
-              })
-              .catch(() => {
-                alert('Failed to copy');
-              });
+            navigator.clipboard.writeText(textToCopy).then(() => {
+              button.textContent = '✅ Copied!';
+              setTimeout(() => {
+                button.textContent = '📋 Copy';
+              }, 1200);
+            }).catch(() => {
+              alert('Failed to copy');
+            });
           }
         });
       });
 
-      // Attach event for Mark as Complete button
+      // Mark Complete button with confirmation prompt
       orderDiv.querySelectorAll('.mark-complete-btn').forEach((button) => {
         button.addEventListener('click', async () => {
           const orderNumber = button.getAttribute('data-order-number');
+
+          if (!confirm(`Are you sure you want to mark order #${orderNumber} as complete?`)) {
+            return;
+          }
+
           button.disabled = true;
           button.textContent = 'Updating...';
 
@@ -537,145 +581,108 @@
       return orderDiv;
     }
 
-    // Filter orders and exclude Delivered entirely
-    function filterOrders(query) {
-      if (!query) query = '';
-      const lowerQuery = query.toLowerCase();
+    // Filter orders by search & status filter dropdown
+    function filterOrders(searchQuery) {
+      if (!searchQuery) searchQuery = '';
+      const lowerQuery = searchQuery.toLowerCase();
 
-      // Exclude Delivered, then filter by query
+      const statusFilter = filterSelectEl.value;
+
       return allOrders.filter((order) => {
         const status = (order['Order Status'] || '').toLowerCase();
         if (status === 'delivered') return false; // exclude Delivered
 
-        // Filter by search query
-        return Object.values(order).some(
-          (value) =>
-            value &&
-            value
-              .toString()
-              .toLowerCase()
-              .includes(lowerQuery)
-        );
+        // Filter by status dropdown
+        if (statusFilter === 'pending' && status === 'shipped') return false;
+        if (statusFilter === 'shipped' && status !== 'shipped') return false;
+
+        // Search fields: delivery address, courier, brand, dress sku
+        const searchable = (
+          (order['Delivery Address'] || '') + ' ' +
+          (order['Courier'] || '') + ' ' +
+          (order['Brand Name'] || '') + ' ' +
+          (order['Dress Name / SKU'] || '')
+        ).toLowerCase();
+
+        return searchable.includes(lowerQuery);
       });
     }
 
-    // Render counts of Pending and Shipped (excluding Delivered)
-    function renderCounts(orders) {
-      const pendingCount = orders.filter((o) => {
-        const status = (o['Order Status'] || '').toLowerCase();
-        return status !== 'shipped';
-      }).length;
+    function renderOrders(ordersToRender) {
+      const ordersContainer = document.getElementById('orders');
+      ordersContainer.innerHTML = '';
 
-      const shippedCount = orders.filter((o) => {
-        const status = (o['Order Status'] || '').toLowerCase();
-        return status === 'shipped';
-      }).length;
+      if (ordersToRender.length === 0) {
+        ordersContainer.innerHTML = '<p>No orders found.</p>';
+        updateCounts();
+        return;
+      }
 
-      orderCountsEl.innerHTML = `
-        <span class="pending">Pending: ${pendingCount}</span>
-        <span class="shipped">Shipped: ${shippedCount}</span>
-      `;
+      ordersToRender.forEach((order, idx) => {
+        ordersContainer.appendChild(createOrderElement(order, idx));
+      });
+
+      updateCounts();
     }
 
-function renderOrders(orders) {
-  const container = document.getElementById('orders');
-  container.innerHTML = '';
+    function updateCounts() {
+      const pendingCount = allOrders.filter(o => (o['Order Status'] || '').toLowerCase() !== 'shipped' && (o['Order Status'] || '').toLowerCase() !== 'delivered').length;
+      const shippedCount = allOrders.filter(o => (o['Order Status'] || '').toLowerCase() === 'shipped').length;
 
-  if (orders.length === 0) {
-    container.innerHTML = '<p style="text-align:center; color:#888;">No orders found.</p>';
-    renderCounts([]);
-    return;
-  }
-
-  // Sort orders: pending (not shipped) first, then shipped
-  orders.sort((a, b) => {
-    const statusA = (a['Order Status'] || '').toLowerCase();
-    const statusB = (b['Order Status'] || '').toLowerCase();
-
-    if (statusA === statusB) return 0;
-    if (statusA === 'shipped') return 1;  // a shipped → after b
-    if (statusB === 'shipped') return -1; // b shipped → after a
-    return 0;
-  });
-
-  orders.forEach((order, idx) => {
-    const orderEl = createOrderElement(order, idx);
-    container.appendChild(orderEl);
-  });
-
-  renderCounts(orders);
-}
+      orderCountsEl.querySelector('.pending').textContent = `Pending: ${pendingCount}`;
+      orderCountsEl.querySelector('.shipped').textContent = `Shipped: ${shippedCount}`;
+    }
 
     async function fetchOrders() {
-      const spinner = document.getElementById('spinner');
-      const container = document.getElementById('orders');
-      const searchInput = document.getElementById('search-input');
-      const refreshBtn = document.getElementById('refresh-button');
-
-      spinner.style.display = 'flex';
-      container.style.display = 'none';
-      searchInput.disabled = true;
-      refreshBtn.style.display = 'none';
+      document.getElementById('spinner').style.display = 'flex';
+      document.getElementById('orders').style.display = 'none';
+      document.getElementById('refresh-button').style.display = 'none';
+      searchInputEl.disabled = true;
 
       try {
-        const response = await fetch(API_URL);
-        if (!response.ok) throw new Error('Network error');
-        const data = await response.json();
+        const res = await fetch(API_URL);
+        if (!res.ok) throw new Error('Network response was not ok');
 
-        const requiredFields = [
-          'Order Number',
-          'Delivery Address',
-          'Country',
-          'Brand Name',
-          'Dress Name / SKU',
-          'Quantity',
-          'Courier',
-          'Order Status',
-        ];
-        allOrders = data.filter((order) => {
-          return !requiredFields.some(
-            (field) =>
-              !order[field] || order[field].toString().trim() === ''
-          );
-        });
+        const data = await res.json();
 
-        // Exclude Delivered from the initial loaded set too
-        allOrders = allOrders.filter(
-          (o) => (o['Order Status'] || '').toLowerCase() !== 'delivered'
-        );
-
+        allOrders = Array.isArray(data) ? data : [];
         filteredOrders = allOrders;
-        spinner.style.display = 'none';
-        container.style.display = 'block';
-        searchInput.disabled = false;
-        refreshBtn.style.display = 'inline-block';
+
+        searchInputEl.disabled = false;
+
+        document.getElementById('spinner').style.display = 'none';
+        document.getElementById('orders').style.display = 'block';
+        document.getElementById('refresh-button').style.display = 'inline-block';
 
         renderOrders(filteredOrders);
       } catch (error) {
-        spinner.style.display = 'none';
-        container.style.display = 'block';
-        container.innerHTML =
-          '<p style="text-align:center; color:#e74c3c;">Failed to load orders. Please try again.</p>';
-        refreshBtn.style.display = 'inline-block';
-        searchInput.disabled = true;
-        renderCounts([]);
+        document.getElementById('spinner').style.display = 'none';
+        document.getElementById('orders').style.display = 'block';
+        document.getElementById('orders').innerHTML = `<p style="color:red;">Failed to load orders: ${error.message}</p>`;
+        document.getElementById('refresh-button').style.display = 'inline-block';
       }
     }
 
-    document
-      .getElementById('search-input')
-      .addEventListener('input', (e) => {
-        filteredOrders = filterOrders(e.target.value);
-        renderOrders(filteredOrders);
-      });
+    // Search input event
+    searchInputEl.addEventListener('input', (e) => {
+      const query = e.target.value;
+      filteredOrders = filterOrders(query);
+      renderOrders(filteredOrders);
+    });
 
-    document
-      .getElementById('refresh-button')
-      .addEventListener('click', () => {
-        fetchOrders();
-      });
+    // Filter select event already set above
+    filterSelectEl.addEventListener('change', () => {
+      const query = searchInputEl.value;
+      filteredOrders = filterOrders(query);
+      renderOrders(filteredOrders);
+    });
 
+    document.getElementById('refresh-button').addEventListener('click', () => {
+      fetchOrders();
+    });
+
+    // Initial fetch
     fetchOrders();
   </script>
 </body>
-
+</html>
