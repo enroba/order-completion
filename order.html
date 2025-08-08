@@ -577,24 +577,34 @@
       `;
     }
 
-    function renderOrders(orders) {
-      const container = document.getElementById('orders');
-      container.innerHTML = '';
+function renderOrders(orders) {
+  const container = document.getElementById('orders');
+  container.innerHTML = '';
 
-      if (orders.length === 0) {
-        container.innerHTML =
-          '<p style="text-align:center; color:#888;">No orders found.</p>';
-        renderCounts([]); // update counts to zero
-        return;
-      }
+  if (orders.length === 0) {
+    container.innerHTML = '<p style="text-align:center; color:#888;">No orders found.</p>';
+    renderCounts([]);
+    return;
+  }
 
-      orders.forEach((order, idx) => {
-        const orderEl = createOrderElement(order, idx);
-        container.appendChild(orderEl);
-      });
+  // Sort orders: pending (not shipped) first, then shipped
+  orders.sort((a, b) => {
+    const statusA = (a['Order Status'] || '').toLowerCase();
+    const statusB = (b['Order Status'] || '').toLowerCase();
 
-      renderCounts(orders);
-    }
+    if (statusA === statusB) return 0;
+    if (statusA === 'shipped') return 1;  // a shipped → after b
+    if (statusB === 'shipped') return -1; // b shipped → after a
+    return 0;
+  });
+
+  orders.forEach((order, idx) => {
+    const orderEl = createOrderElement(order, idx);
+    container.appendChild(orderEl);
+  });
+
+  renderCounts(orders);
+}
 
     async function fetchOrders() {
       const spinner = document.getElementById('spinner');
@@ -668,3 +678,4 @@
     fetchOrders();
   </script>
 </body>
+
