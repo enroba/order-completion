@@ -1,10 +1,11 @@
 <body>
 
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Enroba Orders</title>
   <style>
-    *, *::before, *::after {
+    *, *::before,
+    *::after {
       box-sizing: border-box;
     }
 
@@ -23,6 +24,28 @@
       font-size: 26px;
       margin-bottom: 25px;
       letter-spacing: 1px;
+    }
+
+    /* New styles for counts */
+    #order-counts {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 16px;
+      color: #34495e;
+    }
+
+    #order-counts span {
+      display: inline-block;
+      margin: 0 15px;
+      font-weight: 600;
+    }
+
+    #order-counts .pending {
+      color: #e67e22;
+    }
+
+    #order-counts .shipped {
+      color: #27ae60;
     }
 
     #search-container {
@@ -50,7 +73,7 @@
       background: #ffffff;
       padding: 20px;
       border-radius: 12px;
-      box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
       margin-bottom: 25px;
       transition: transform 0.2s ease;
     }
@@ -108,13 +131,13 @@
       border-radius: 6px;
       text-decoration: none;
       font-weight: 600;
-      box-shadow: 0 3px 8px rgba(26,188,156,0.3);
+      box-shadow: 0 3px 8px rgba(26, 188, 156, 0.3);
       transition: 0.3s ease;
     }
 
     .label-link a:hover {
       background-color: #16a085;
-      box-shadow: 0 5px 12px rgba(22,160,133,0.4);
+      box-shadow: 0 5px 12px rgba(22, 160, 133, 0.4);
     }
 
     .mark-complete-btn {
@@ -126,13 +149,13 @@
       border-radius: 6px;
       cursor: pointer;
       font-weight: 600;
-      box-shadow: 0 3px 8px rgba(39,174,96,0.4);
+      box-shadow: 0 3px 8px rgba(39, 174, 96, 0.4);
       transition: 0.3s ease;
     }
 
     .mark-complete-btn:hover:not(:disabled) {
       background-color: #219150;
-      box-shadow: 0 5px 12px rgba(33,145,80,0.5);
+      box-shadow: 0 5px 12px rgba(33, 145, 80, 0.5);
     }
 
     .mark-complete-btn:disabled {
@@ -174,26 +197,30 @@
     }
 
     @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      0% {
+        transform: rotate(0deg);
+      }
 
+      100% {
+        transform: rotate(360deg);
+      }
     }
 
-#refresh-button {
-  display: none;
-  margin: 0 auto 30px auto; /* already includes bottom margin of 30px */
-  padding: 10px 22px;
-  background: #1abc9c;
-  color: white;
-  border: none;
-  font-size: 15px;
-  font-weight: 600;
-  border-radius: 8px;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(26,188,156,0.4);
-  transition: 0.3s ease;
-}
-
+    #refresh-button {
+      display: none;
+      margin: 0 auto 30px auto;
+      /* already includes bottom margin of 30px */
+      padding: 10px 22px;
+      background: #1abc9c;
+      color: white;
+      border: none;
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(26, 188, 156, 0.4);
+      transition: 0.3s ease;
+    }
 
     #refresh-button:hover {
       background: #16a085;
@@ -210,7 +237,8 @@
     }
 
     .field-inline strong {
-      min-width: 90px; /* label width */
+      min-width: 90px;
+      /* label width */
       color: #34495e;
     }
 
@@ -238,7 +266,7 @@
       font-size: 15px;
     }
 
-    .flex-row > p {
+    .flex-row>p {
       margin: 0;
       white-space: nowrap;
     }
@@ -321,8 +349,14 @@
 
   <h1>Enroba Order Completion</h1>
 
+  <!-- New container for counts -->
+  <div id="order-counts" aria-live="polite" aria-atomic="true">
+    <span class="pending">Pending: 0</span>
+    <span class="shipped">Shipped: 0</span>
+  </div>
+
   <div id="search-container">
-    <input type="search" id="search-input" placeholder="🔍 Search by address, courier, brand..." autocomplete="off" disabled>
+    <input type="search" id="search-input" placeholder="🔍 Search by address, courier, brand..." autocomplete="off" disabled />
   </div>
 
   <div id="spinner" aria-live="polite">
@@ -335,10 +369,13 @@
   <button id="refresh-button">🔄 Refresh Orders</button>
 
   <script>
-    const API_URL = 'https://script.google.com/macros/s/AKfycbwy6otpLST30pWsEbIUS2kfNacUK12UwMnOv0XKu2zvmDLME03Nm4TrCQfLQgLkAyLn/exec';
+    const API_URL =
+      'https://script.google.com/macros/s/AKfycbwy6otpLST30pWsEbIUS2kfNacUK12UwMnOv0XKu2zvmDLME03Nm4TrCQfLQgLkAyLn/exec';
 
     let allOrders = [];
     let filteredOrders = [];
+
+    const orderCountsEl = document.getElementById('order-counts');
 
     function createAddressHtml(address) {
       if (!address || address.trim() === '') return '';
@@ -390,8 +427,10 @@
         html += `<p><strong>Notes:</strong> ${order['Notes']}</p>`;
       }
 
-const isShipped = order['Order Status'] && order['Order Status'].toLowerCase() === 'shipped';
-const completeBtnHTML = `
+      const isShipped =
+        order['Order Status'] &&
+        order['Order Status'].toLowerCase() === 'shipped';
+      const completeBtnHTML = `
   <button
     class="mark-complete-btn"
     type="button"
@@ -402,26 +441,25 @@ const completeBtnHTML = `
   </button>
 `;
 
-if (order['Label URL'] && order['Label URL'].trim() !== '') {
-  html += `
+      if (order['Label URL'] && order['Label URL'].trim() !== '') {
+        html += `
     <p class="label-link">
       <a href="${order['Label URL']}" target="_blank">📎 Download Label</a>
       ${completeBtnHTML}
     </p>
   `;
-} else {
-  html += `
+      } else {
+        html += `
     <p>
       ${completeBtnHTML}
     </p>
   `;
-}
-
+      }
 
       orderDiv.innerHTML = html;
 
       // Attach copy event listeners for all copy buttons
-      orderDiv.querySelectorAll('.copy-btn, .copy-btn-inline').forEach(button => {
+      orderDiv.querySelectorAll('.copy-btn, .copy-btn-inline').forEach((button) => {
         button.addEventListener('click', () => {
           const textToCopy = button.getAttribute('data-copy-value');
           if (!navigator.clipboard) {
@@ -437,20 +475,23 @@ if (order['Label URL'] && order['Label URL'].trim() !== '') {
             }
             document.body.removeChild(textarea);
           } else {
-            navigator.clipboard.writeText(textToCopy).then(() => {
-              button.textContent = '✅ Copied!';
-              setTimeout(() => {
-                button.textContent = '📋 Copy';
-              }, 1200);
-            }, () => {
-              alert('Failed to copy');
-            });
+            navigator.clipboard
+              .writeText(textToCopy)
+              .then(() => {
+                button.textContent = '✅ Copied!';
+                setTimeout(() => {
+                  button.textContent = '📋 Copy';
+                }, 1200);
+              })
+              .catch(() => {
+                alert('Failed to copy');
+              });
           }
         });
       });
 
       // Attach event for Mark as Complete button
-      orderDiv.querySelectorAll('.mark-complete-btn').forEach(button => {
+      orderDiv.querySelectorAll('.mark-complete-btn').forEach((button) => {
         button.addEventListener('click', async () => {
           const orderNumber = button.getAttribute('data-order-number');
           button.disabled = true;
@@ -470,7 +511,8 @@ if (order['Label URL'] && order['Label URL'].trim() !== '') {
               body: formData.toString(),
             });
 
-            if (!updateResponse.ok) throw new Error('Network response was not ok');
+            if (!updateResponse.ok)
+              throw new Error('Network response was not ok');
 
             const result = await updateResponse.json();
 
@@ -495,12 +537,54 @@ if (order['Label URL'] && order['Label URL'].trim() !== '') {
       return orderDiv;
     }
 
+    // Filter orders and exclude Delivered entirely
+    function filterOrders(query) {
+      if (!query) query = '';
+      const lowerQuery = query.toLowerCase();
+
+      // Exclude Delivered, then filter by query
+      return allOrders.filter((order) => {
+        const status = (order['Order Status'] || '').toLowerCase();
+        if (status === 'delivered') return false; // exclude Delivered
+
+        // Filter by search query
+        return Object.values(order).some(
+          (value) =>
+            value &&
+            value
+              .toString()
+              .toLowerCase()
+              .includes(lowerQuery)
+        );
+      });
+    }
+
+    // Render counts of Pending and Shipped (excluding Delivered)
+    function renderCounts(orders) {
+      const pendingCount = orders.filter((o) => {
+        const status = (o['Order Status'] || '').toLowerCase();
+        return status !== 'shipped';
+      }).length;
+
+      const shippedCount = orders.filter((o) => {
+        const status = (o['Order Status'] || '').toLowerCase();
+        return status === 'shipped';
+      }).length;
+
+      orderCountsEl.innerHTML = `
+        <span class="pending">Pending: ${pendingCount}</span>
+        <span class="shipped">Shipped: ${shippedCount}</span>
+      `;
+    }
+
     function renderOrders(orders) {
       const container = document.getElementById('orders');
       container.innerHTML = '';
 
       if (orders.length === 0) {
-        container.innerHTML = '<p style="text-align:center; color:#888;">No orders found.</p>';
+        container.innerHTML =
+          '<p style="text-align:center; color:#888;">No orders found.</p>';
+        renderCounts([]); // update counts to zero
         return;
       }
 
@@ -508,16 +592,8 @@ if (order['Label URL'] && order['Label URL'].trim() !== '') {
         const orderEl = createOrderElement(order, idx);
         container.appendChild(orderEl);
       });
-    }
 
-    function filterOrders(query) {
-      if (!query) return allOrders;
-      const lowerQuery = query.toLowerCase();
-      return allOrders.filter(order => {
-        return Object.values(order).some(value =>
-          value && value.toString().toLowerCase().includes(lowerQuery)
-        );
-      });
+      renderCounts(orders);
     }
 
     async function fetchOrders() {
@@ -536,10 +612,27 @@ if (order['Label URL'] && order['Label URL'].trim() !== '') {
         if (!response.ok) throw new Error('Network error');
         const data = await response.json();
 
-        const requiredFields = ['Order Number', 'Delivery Address', 'Country', 'Brand Name', 'Dress Name / SKU', 'Quantity', 'Courier', 'Order Status'];
-        allOrders = data.filter(order => {
-          return !requiredFields.some(field => !order[field] || order[field].toString().trim() === '');
+        const requiredFields = [
+          'Order Number',
+          'Delivery Address',
+          'Country',
+          'Brand Name',
+          'Dress Name / SKU',
+          'Quantity',
+          'Courier',
+          'Order Status',
+        ];
+        allOrders = data.filter((order) => {
+          return !requiredFields.some(
+            (field) =>
+              !order[field] || order[field].toString().trim() === ''
+          );
         });
+
+        // Exclude Delivered from the initial loaded set too
+        allOrders = allOrders.filter(
+          (o) => (o['Order Status'] || '').toLowerCase() !== 'delivered'
+        );
 
         filteredOrders = allOrders;
         spinner.style.display = 'none';
@@ -551,23 +644,27 @@ if (order['Label URL'] && order['Label URL'].trim() !== '') {
       } catch (error) {
         spinner.style.display = 'none';
         container.style.display = 'block';
-        container.innerHTML = `<p style="text-align:center; color:#e74c3c;">Failed to load orders. Please try again.</p>`;
+        container.innerHTML =
+          '<p style="text-align:center; color:#e74c3c;">Failed to load orders. Please try again.</p>';
         refreshBtn.style.display = 'inline-block';
         searchInput.disabled = true;
+        renderCounts([]);
       }
     }
 
-    document.getElementById('search-input').addEventListener('input', e => {
-      filteredOrders = filterOrders(e.target.value);
-      renderOrders(filteredOrders);
-    });
+    document
+      .getElementById('search-input')
+      .addEventListener('input', (e) => {
+        filteredOrders = filterOrders(e.target.value);
+        renderOrders(filteredOrders);
+      });
 
-    document.getElementById('refresh-button').addEventListener('click', () => {
-      fetchOrders();
-    });
+    document
+      .getElementById('refresh-button')
+      .addEventListener('click', () => {
+        fetchOrders();
+      });
 
     fetchOrders();
   </script>
-
-
 </body>
