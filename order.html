@@ -481,7 +481,7 @@
           data-order-number="${order['Order Number']}"
           ${isShipped ? 'disabled' : ''}
         >
-          ${isShipped ? '✅ Marked Complete' : 'Mark as Complete'}
+          ${isShipped ? '✅ Marked Completed' : 'Mark as Complete'}
         </button>`;
 
       if (order['Label URL'] && order['Label URL'].trim() !== '') {
@@ -566,7 +566,7 @@
               if (statusP) {
                 statusP.innerHTML = '<strong>Order Status:</strong> Shipped';
               }
-              button.textContent = '✅ Marked Complete';
+              button.textContent = '✅ Marked Completed';
             } else {
               throw new Error(result.message || 'Failed to update order status');
             }
@@ -704,4 +704,5 @@ function renderOrders(ordersToRender) {
   </script>
 </body>
 </html>
+
 
