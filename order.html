@@ -608,21 +608,39 @@
       });
     }
 
- function renderOrders(ordersToRender) {
+function renderOrders(ordersToRender) {
   const ordersContainer = document.getElementById('orders');
   ordersContainer.innerHTML = '';
-   
-  const visibleOrders = ordersToRender.filter(order => {
+
+  // ✅ Exclude Delivered orders
+  ordersToRender = ordersToRender.filter(order => {
     const status = (order['Order Status'] || '').toLowerCase().trim();
     return status !== 'delivered';
   });
-
 
   if (ordersToRender.length === 0) {
     ordersContainer.innerHTML = '<p>No orders found.</p>';
     updateCounts();
     return;
   }
+
+  // 🔽 Sort orders: Pending first, then Shipped
+  ordersToRender.sort((a, b) => {
+    const aStatus = (a['Order Status'] || '').toLowerCase();
+    const bStatus = (b['Order Status'] || '').toLowerCase();
+
+    if (aStatus === 'shipped' && bStatus !== 'shipped') return 1;
+    if (aStatus !== 'shipped' && bStatus === 'shipped') return -1;
+    return 0;
+  });
+
+  ordersToRender.forEach((order, idx) => {
+    ordersContainer.appendChild(createOrderElement(order, idx));
+  });
+
+  updateCounts();
+}
+
 
   // 🔽 Sort orders: Pending first, then Shipped (and exclude Delivered already handled)
   ordersToRender.sort((a, b) => {
@@ -704,6 +722,7 @@
   </script>
 </body>
 </html>
+
 
 
 
