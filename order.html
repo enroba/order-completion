@@ -611,6 +611,12 @@
  function renderOrders(ordersToRender) {
   const ordersContainer = document.getElementById('orders');
   ordersContainer.innerHTML = '';
+   
+  const visibleOrders = ordersToRender.filter(order => {
+    const status = (order['Order Status'] || '').toLowerCase().trim();
+    return status !== 'delivered';
+  });
+
 
   if (ordersToRender.length === 0) {
     ordersContainer.innerHTML = '<p>No orders found.</p>';
@@ -698,5 +704,6 @@
   </script>
 </body>
 </html>
+
 
 
