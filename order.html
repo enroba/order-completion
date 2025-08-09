@@ -123,6 +123,7 @@
       align-items: center;
       gap: 12px;
       margin-top: 14px;
+      flex-wrap: wrap;
     }
 
     .label-link a {
@@ -139,6 +140,15 @@
     .label-link a:hover {
       background-color: #16a085;
       box-shadow: 0 5px 12px rgba(22, 160, 133, 0.4);
+    }
+
+    /* Separated buttons container */
+    .order-buttons {
+      margin-top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 220px;
     }
 
     .mark-complete-btn {
@@ -160,6 +170,30 @@
     }
 
     .mark-complete-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .received-vendor-btn {
+      padding: 8px 16px;
+      font-size: 14px;
+      border: none;
+      background-color: #007bff;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      box-shadow: 0 3px 8px rgba(0, 123, 255, 0.4);
+      transition: 0.3s ease;
+    }
+
+    .received-vendor-btn:hover:not(:disabled) {
+      background-color: #0056b3;
+      box-shadow: 0 5px 12px rgba(0, 86, 179, 0.5);
+    }
+
+    .received-vendor-btn:disabled {
       opacity: 0.6;
       cursor: not-allowed;
       box-shadow: none;
@@ -331,7 +365,8 @@
         border-radius: 5px;
       }
 
-      .mark-complete-btn {
+      .mark-complete-btn,
+      .received-vendor-btn {
         font-size: 13px;
         padding: 7px 12px;
       }
@@ -473,8 +508,11 @@
         html += `<p><strong>Notes:</strong> ${order['Notes']}</p>`;
       }
 
+      // Buttons container separate from label link
+      html += `<div class="order-buttons">`;
+
       const isShipped = order['Order Status'] && order['Order Status'].toLowerCase() === 'shipped';
-      const completeBtnHTML = `
+      html += `
         <button
           class="mark-complete-btn"
           type="button"
@@ -482,18 +520,29 @@
           ${isShipped ? 'disabled' : ''}
         >
           ${isShipped ? '✅ Marked Completed' : 'Mark as Complete'}
-        </button>`;
+        </button>
+      `;
+
+      const receivedFromVendor = order['Recieved from Vendor'] && order['Recieved from Vendor'].toLowerCase() === 'yes';
+      html += `
+        <button
+          class="received-vendor-btn"
+          type="button"
+          data-order-number="${order['Order Number']}"
+          data-vendor-btn
+          ${receivedFromVendor ? 'disabled' : ''}
+        >
+          ${receivedFromVendor ? '✅ Received from Vendor' : 'Received from Vendor'}
+        </button>
+      `;
+
+      html += `</div>`;
 
       if (order['Label URL'] && order['Label URL'].trim() !== '') {
         html += `
           <p class="label-link">
             <a href="${order['Label URL']}" target="_blank" rel="noopener noreferrer">📎 Download Label</a>
-            ${completeBtnHTML}
           </p>
-        `;
-      } else {
-        html += `
-          <p>${completeBtnHTML}</p>
         `;
       }
 
@@ -545,35 +594,74 @@
             const formData = new URLSearchParams();
             formData.append('action', 'updateStatus');
             formData.append('orderNumber', orderNumber);
-            formData.append('newStatus', 'Shipped');
+            formData.append('received', 'Yes');
 
-            const updateResponse = await fetch(API_URL, {
+            const response = await fetch(API_URL, {
               method: 'POST',
+              body: formData,
               headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
               },
-              body: formData.toString(),
             });
 
-            if (!updateResponse.ok)
-              throw new Error('Network response was not ok');
-
-            const result = await updateResponse.json();
+            const result = await response.json();
 
             if (result.success) {
-              // Update Order Status text in the UI
-              const statusP = orderDiv.querySelector('.order-status');
-              if (statusP) {
-                statusP.innerHTML = '<strong>Order Status:</strong> Shipped';
-              }
-              button.textContent = '✅ Marked Completed';
+              alert(`Order #${orderNumber} marked as complete.`);
+              loadOrders(); // Reload orders to refresh UI and counts
             } else {
-              throw new Error(result.message || 'Failed to update order status');
+              alert(`Failed to update order #${orderNumber}: ${result.message || 'Unknown error'}`);
+              button.disabled = false;
+              button.textContent = 'Mark as Complete';
             }
           } catch (err) {
-            alert('Error updating order status: ' + err.message);
+            alert(`Error updating order: ${err.message}`);
             button.disabled = false;
             button.textContent = 'Mark as Complete';
+          }
+        });
+      });
+
+      // Received from Vendor button with confirmation prompt
+      orderDiv.querySelectorAll('.received-vendor-btn').forEach((button) => {
+        button.addEventListener('click', async () => {
+          const orderNumber = button.getAttribute('data-order-number');
+
+          if (!confirm(`Confirm order #${orderNumber} has been received from vendor?`)) {
+            return;
+          }
+
+          button.disabled = true;
+          button.textContent = 'Updating...';
+
+          try {
+            const formData = new URLSearchParams();
+            formData.append('action', 'updateVendor');
+            formData.append('orderNumber', orderNumber);
+            formData.append('received', 'Yes');
+
+            const response = await fetch(API_URL, {
+              method: 'POST',
+              body: formData,
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+              },
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+              alert(`Order #${orderNumber} marked as received from vendor.`);
+              loadOrders();
+            } else {
+              alert(`Failed to update vendor status for order #${orderNumber}: ${result.message || 'Unknown error'}`);
+              button.disabled = false;
+              button.textContent = 'Received from Vendor';
+            }
+          } catch (err) {
+            alert(`Error updating vendor status: ${err.message}`);
+            button.disabled = false;
+            button.textContent = 'Received from Vendor';
           }
         });
       });
@@ -581,128 +669,110 @@
       return orderDiv;
     }
 
-    // Filter orders by search & status filter dropdown
-    function filterOrders(searchQuery) {
-      if (!searchQuery) searchQuery = '';
-      const lowerQuery = searchQuery.toLowerCase();
+    function updateCounts(orders) {
+      const pending = orders.filter(o => (o['Order Status'] || '').toLowerCase() !== 'shipped').length;
+      const shipped = orders.filter(o => (o['Order Status'] || '').toLowerCase() === 'shipped').length;
 
-      const statusFilter = filterSelectEl.value;
+      orderCountsEl.innerHTML = `
+        <span class="pending">Pending: ${pending}</span>
+        <span class="shipped">Shipped: ${shipped}</span>
+      `;
+    }
 
-      return allOrders.filter((order) => {
-        const status = (order['Order Status'] || '').toLowerCase();
-        if (status === 'delivered') return false; // exclude Delivered
+    function filterOrders() {
+      const filterValue = filterSelectEl.value;
+      let filtered = allOrders;
 
-        // Filter by status dropdown
-        if (statusFilter === 'pending' && status === 'shipped') return false;
-        if (statusFilter === 'shipped' && status !== 'shipped') return false;
+      if (filterValue === 'pending') {
+        filtered = allOrders.filter(o => (o['Order Status'] || '').toLowerCase() !== 'shipped');
+      } else if (filterValue === 'shipped') {
+        filtered = allOrders.filter(o => (o['Order Status'] || '').toLowerCase() === 'shipped');
+      }
 
-        // Search fields: delivery address, courier, brand, dress sku
-        const searchable = (
-          (order['Delivery Address'] || '') + ' ' +
-          (order['Courier'] || '') + ' ' +
-          (order['Brand Name'] || '') + ' ' +
-          (order['Dress Name / SKU'] || '')
-        ).toLowerCase();
+      filteredOrders = filtered;
+      updateCounts(filteredOrders);
+      renderOrders(filteredOrders);
+    }
 
-        return searchable.includes(lowerQuery);
+    function searchOrders(query) {
+      const lowerQuery = query.trim().toLowerCase();
+
+      if (lowerQuery === '') {
+        renderOrders(filteredOrders);
+        return;
+      }
+
+      const searched = filteredOrders.filter(o => {
+        return (
+          (o['Delivery Address'] && o['Delivery Address'].toLowerCase().includes(lowerQuery)) ||
+          (o['Courier'] && o['Courier'].toLowerCase().includes(lowerQuery)) ||
+          (o['Brand Name'] && o['Brand Name'].toLowerCase().includes(lowerQuery)) ||
+          (o['Dress Name / SKU'] && o['Dress Name / SKU'].toLowerCase().includes(lowerQuery))
+        );
+      });
+
+      renderOrders(searched);
+    }
+
+    function renderOrders(orders) {
+      const container = document.getElementById('orders');
+      container.innerHTML = '';
+
+      if (orders.length === 0) {
+        container.innerHTML = `<p>No orders found.</p>`;
+        return;
+      }
+
+      orders.forEach((order, i) => {
+        const el = createOrderElement(order, i);
+        container.appendChild(el);
       });
     }
 
-function renderOrders(ordersToRender) {
-  const ordersContainer = document.getElementById('orders');
-  ordersContainer.innerHTML = '';
-
-  // ✅ Exclude Delivered orders
-  ordersToRender = ordersToRender.filter(order => {
-    const status = (order['Order Status'] || '').toLowerCase().trim();
-    return status !== 'delivered';
-  });
-
-  if (ordersToRender.length === 0) {
-    ordersContainer.innerHTML = '<p>No orders found.</p>';
-    updateCounts();
-    return;
-  }
-
-  // 🔽 Sort orders: Pending first, then Shipped
-  ordersToRender.sort((a, b) => {
-    const aStatus = (a['Order Status'] || '').toLowerCase();
-    const bStatus = (b['Order Status'] || '').toLowerCase();
-
-    if (aStatus === 'shipped' && bStatus !== 'shipped') return 1;
-    if (aStatus !== 'shipped' && bStatus === 'shipped') return -1;
-    return 0;
-  });
-
-  ordersToRender.forEach((order, idx) => {
-    ordersContainer.appendChild(createOrderElement(order, idx));
-  });
-
-  updateCounts();
-}
-
-
-
-    function updateCounts() {
-      const pendingCount = allOrders.filter(o => (o['Order Status'] || '').toLowerCase() !== 'shipped' && (o['Order Status'] || '').toLowerCase() !== 'delivered').length;
-      const shippedCount = allOrders.filter(o => (o['Order Status'] || '').toLowerCase() === 'shipped').length;
-
-      orderCountsEl.querySelector('.pending').textContent = `Pending: ${pendingCount}`;
-      orderCountsEl.querySelector('.shipped').textContent = `Shipped: ${shippedCount}`;
-    }
-
-    async function fetchOrders() {
+    async function loadOrders() {
       document.getElementById('spinner').style.display = 'flex';
       document.getElementById('orders').style.display = 'none';
       document.getElementById('refresh-button').style.display = 'none';
       searchInputEl.disabled = true;
+      searchInputEl.value = '';
 
       try {
-        const res = await fetch(API_URL);
-        if (!res.ok) throw new Error('Network response was not ok');
+        const response = await fetch(API_URL);
+        const data = await response.json();
 
-        const data = await res.json();
-
-        allOrders = Array.isArray(data) ? data : [];
-        filteredOrders = allOrders;
-
-        searchInputEl.disabled = false;
-
+        if (Array.isArray(data)) {
+          allOrders = data;
+          filterOrders();
+          document.getElementById('spinner').style.display = 'none';
+          document.getElementById('orders').style.display = 'block';
+          searchInputEl.disabled = false;
+          document.getElementById('refresh-button').style.display = 'inline-block';
+        } else {
+          throw new Error('Unexpected data format');
+        }
+      } catch (err) {
         document.getElementById('spinner').style.display = 'none';
         document.getElementById('orders').style.display = 'block';
-        document.getElementById('refresh-button').style.display = 'inline-block';
-
-        renderOrders(filteredOrders);
-      } catch (error) {
-        document.getElementById('spinner').style.display = 'none';
-        document.getElementById('orders').style.display = 'block';
-        document.getElementById('orders').innerHTML = `<p style="color:red;">Failed to load orders: ${error.message}</p>`;
+        document.getElementById('orders').innerHTML = `<p style="color:red;">Failed to load orders: ${err.message}</p>`;
         document.getElementById('refresh-button').style.display = 'inline-block';
       }
     }
 
-    // Search input event
-    searchInputEl.addEventListener('input', (e) => {
-      const query = e.target.value;
-      filteredOrders = filterOrders(query);
-      renderOrders(filteredOrders);
+    // Event listeners
+    filterSelectEl.addEventListener('change', () => {
+      filterOrders();
+      searchInputEl.value = '';
     });
 
-    // Filter select event already set above
-    filterSelectEl.addEventListener('change', () => {
-      const query = searchInputEl.value;
-      filteredOrders = filterOrders(query);
-      renderOrders(filteredOrders);
+    searchInputEl.addEventListener('input', (e) => {
+      searchOrders(e.target.value);
     });
 
     document.getElementById('refresh-button').addEventListener('click', () => {
-      fetchOrders();
+      loadOrders();
     });
 
-    // Initial fetch
-    fetchOrders();
+    loadOrders();
   </script>
 </body>
 </html>
-
-
