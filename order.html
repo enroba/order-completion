@@ -693,23 +693,34 @@
       `;
         }
 
-        function filterOrders() {
-            const filterValue = filterSelectEl.value;
-            let filtered = allOrders;
+      function filterOrders() {
+  const filterValue = filterSelectEl.value;
+  let filtered = allOrders;
 
-            // Exclude delivered orders first
-            filtered = filtered.filter(o => (o['Order Status'] || '').toLowerCase() !== 'delivered');
+  // Exclude delivered orders first
+  filtered = filtered.filter(o => (o['Order Status'] || '').toLowerCase() !== 'delivered');
 
-            if (filterValue === 'pending') {
-                filtered = filtered.filter(o => (o['Order Status'] || '').toLowerCase() !== 'shipped');
-            } else if (filterValue === 'shipped') {
-                filtered = filtered.filter(o => (o['Order Status'] || '').toLowerCase() === 'shipped');
-            }
+  if (filterValue === 'pending') {
+    filtered = filtered.filter(o => (o['Order Status'] || '').toLowerCase() !== 'shipped');
+  } else if (filterValue === 'shipped') {
+    filtered = filtered.filter(o => (o['Order Status'] || '').toLowerCase() === 'shipped');
+  }
 
-            filteredOrders = filtered;
-            updateCounts(filteredOrders);
-            renderOrders(filteredOrders);
-        }
+  // Sort so pending orders come first, shipped after
+  filtered.sort((a, b) => {
+    const statusA = (a['Order Status'] || '').toLowerCase();
+    const statusB = (b['Order Status'] || '').toLowerCase();
+
+    if (statusA === 'shipped' && statusB !== 'shipped') return 1;  // shipped goes after
+    if (statusA !== 'shipped' && statusB === 'shipped') return -1; // pending goes before
+    return 0; // otherwise keep original order
+  });
+
+  filteredOrders = filtered;
+  updateCounts(filteredOrders);
+  renderOrders(filteredOrders);
+}
+
 
 
         function searchOrders(query) {
@@ -799,3 +810,4 @@
 </body>
 
 </html>
+
