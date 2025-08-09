@@ -679,40 +679,48 @@
       `;
     }
 
-    function filterOrders() {
-      const filterValue = filterSelectEl.value;
-      let filtered = allOrders;
+ function filterOrders() {
+  const filterValue = filterSelectEl.value;
+  let filtered = allOrders;
 
-      if (filterValue === 'pending') {
-        filtered = allOrders.filter(o => (o['Order Status'] || '').toLowerCase() !== 'shipped');
-      } else if (filterValue === 'shipped') {
-        filtered = allOrders.filter(o => (o['Order Status'] || '').toLowerCase() === 'shipped');
-      }
+  // Exclude delivered orders first
+  filtered = filtered.filter(o => (o['Order Status'] || '').toLowerCase() !== 'delivered');
 
-      filteredOrders = filtered;
-      updateCounts(filteredOrders);
-      renderOrders(filteredOrders);
-    }
+  if (filterValue === 'pending') {
+    filtered = filtered.filter(o => (o['Order Status'] || '').toLowerCase() !== 'shipped');
+  } else if (filterValue === 'shipped') {
+    filtered = filtered.filter(o => (o['Order Status'] || '').toLowerCase() === 'shipped');
+  }
 
-    function searchOrders(query) {
-      const lowerQuery = query.trim().toLowerCase();
+  filteredOrders = filtered;
+  updateCounts(filteredOrders);
+  renderOrders(filteredOrders);
+}
 
-      if (lowerQuery === '') {
-        renderOrders(filteredOrders);
-        return;
-      }
 
-      const searched = filteredOrders.filter(o => {
-        return (
-          (o['Delivery Address'] && o['Delivery Address'].toLowerCase().includes(lowerQuery)) ||
-          (o['Courier'] && o['Courier'].toLowerCase().includes(lowerQuery)) ||
-          (o['Brand Name'] && o['Brand Name'].toLowerCase().includes(lowerQuery)) ||
-          (o['Dress Name / SKU'] && o['Dress Name / SKU'].toLowerCase().includes(lowerQuery))
-        );
-      });
+   function searchOrders(query) {
+  const lowerQuery = query.trim().toLowerCase();
 
-      renderOrders(searched);
-    }
+  if (lowerQuery === '') {
+    renderOrders(filteredOrders);
+    return;
+  }
+
+  const searched = filteredOrders.filter(o => {
+    return (
+      (o['Delivery Address'] && o['Delivery Address'].toLowerCase().includes(lowerQuery)) ||
+      (o['Courier'] && o['Courier'].toLowerCase().includes(lowerQuery)) ||
+      (o['Brand Name'] && o['Brand Name'].toLowerCase().includes(lowerQuery)) ||
+      (o['Dress Name / SKU'] && o['Dress Name / SKU'].toLowerCase().includes(lowerQuery))
+    );
+  });
+
+  // Make sure delivered orders are still excluded:
+  const searchedFiltered = searched.filter(o => (o['Order Status'] || '').toLowerCase() !== 'delivered');
+
+  renderOrders(searchedFiltered);
+}
+
 
     function renderOrders(orders) {
       const container = document.getElementById('orders');
