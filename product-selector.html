@@ -91,14 +91,20 @@
     <div id="inputsRow">
       <label for="baseUrlInput">Base URL:</label>
       <input type="text" id="baseUrlInput" value="https://zarposhcollection.com/products/" />
+      
       <label for="markupInput">% Markup:</label>
-      <input type="number" id="markupInput" value="18" min="0" max="100" step="0.1" style="width: 90px;" />
+      <input type="number" id="markupInput" value="18" min="0" max="100" step="0.1" />
+
+      <label for="rateInput">AED → PKR Rate:</label>
+      <input type="number" id="rateInput" value="76" step="0.1" />
     </div>
+
     <div id="searchRow">
       <input type="text" id="productInput" placeholder="Enter product handle (e.g. Cherry Blossom)" required />
       <button id="searchBtn">Search</button>
     </div>
-    <div id="productResult" aria-live="polite" aria-atomic="true" role="region">
+
+    <div id="productResult">
       <div id="originalPrices" class="product-card"></div>
       <div id="markedUpPrices" class="product-card"></div>
     </div>
@@ -110,9 +116,15 @@
     const inputField = document.getElementById('productInput');
     const baseUrlInput = document.getElementById('baseUrlInput');
     const markupInput = document.getElementById('markupInput');
+    const rateInput = document.getElementById('rateInput');
 
     function formatPrice(num) {
       return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function convertAEDtoPKR(aed) {
+      const rate = parseFloat(rateInput.value);
+      return aed * rate;
     }
 
     function fixImageUrl(url) {
@@ -124,62 +136,39 @@
 
     async function fetchProduct() {
       let baseUrl = baseUrlInput.value.trim();
-      if (!baseUrl) { alert('Please enter the base URL.'); return; }
       if (!baseUrl.endsWith('/')) baseUrl += '/';
 
       let input = inputField.value.trim();
-      if (!input) { alert('Please enter a product handle.'); return; }
-
       const handle = input.replace(/\s+/g, '-').toLowerCase();
       const apiUrl = `${baseUrl}${handle}.js`;
 
       productResult.style.display = 'flex';
-      productResult.querySelector('#originalPrices').innerHTML = '<p>Loading...</p>';
-      productResult.querySelector('#markedUpPrices').innerHTML = '';
-      inputField.value = '';
 
       try {
         const res = await fetch(apiUrl);
-        if (!res.ok) throw new Error('Product not found');
         const product = await res.json();
 
         const markupPercent = parseFloat(markupInput.value);
-        if (isNaN(markupPercent) || markupPercent < 0) { alert('Please enter a valid positive markup percentage.'); return; }
 
-        let productImage = null;
-        if (product.image && product.image.src) productImage = fixImageUrl(product.image.src);
-        else if (product.images && product.images.length > 0) productImage = fixImageUrl(product.images[0]);
-
-        let originalList = '';
-        if (productImage) originalList += `<img src="${productImage}" alt="${product.title}" style="width:150px;height:auto;border-radius:12px;margin-bottom:14px;" />`;
-        originalList += '<h4>Available Variants & Prices:</h4>';
+        let originalList = '<h4>Original Prices (PKR):</h4>';
         product.variants.forEach(v => {
-          const stockStatus = v.available ? '<span>In Stock</span>' : '<span class="out-of-stock">Out of Stock</span>';
-          const compareAt = (v.compare_at_price && v.compare_at_price > v.price)
-            ? `<strong>PKR ${formatPrice(v.price / 100)} / PKR ${formatPrice(v.compare_at_price / 100)}</strong>`
-            : `<strong>PKR ${formatPrice(v.price / 100)}</strong>`;
-          originalList += `<div class="variant-item">${v.title !== "Default Title" ? `<strong>${v.title}</strong> - ` : ""}${compareAt} — ${stockStatus}</div>`;
+          const pkr = convertAEDtoPKR(v.price / 100);
+          originalList += `<div class="variant-item">${v.title} - PKR ${formatPrice(pkr)}</div>`;
         });
 
-        // MARKED-UP PRICE CORRECTED
-        let markedUpList = '';
-        if (productImage) markedUpList += `<img src="${productImage}" alt="${product.title}" style="width:150px;height:auto;border-radius:12px;margin-bottom:14px;" />`;
-        markedUpList += `<h4>Prices + ${markupPercent}% Profit:</h4>`;
+        let markedUpList = `<h4>Prices + ${markupPercent}% Profit (PKR):</h4>`;
         product.variants.forEach(v => {
-          const stockStatus = v.available ? '<span>In Stock</span>' : '<span class="out-of-stock">Out of Stock</span>';
-          const markedUpPrice = v.price / (1 - markupPercent / 100);
-          const compareAtMarkedUp = (v.compare_at_price && v.compare_at_price > v.price)
-            ? `<strong>PKR ${formatPrice(markedUpPrice / 100)} / PKR ${formatPrice((v.compare_at_price / (1 - markupPercent / 100)) / 100)}</strong>`
-            : `<strong>PKR ${formatPrice(markedUpPrice / 100)}</strong>`;
-          markedUpList += `<div class="variant-item">${v.title !== "Default Title" ? `<strong>${v.title}</strong> - ` : ""}${compareAtMarkedUp} — ${stockStatus}</div>`;
+          const base = v.price / 100;
+          const marked = base / (1 - markupPercent / 100);
+          const pkr = convertAEDtoPKR(marked);
+          markedUpList += `<div class="variant-item">${v.title} - PKR ${formatPrice(pkr)}</div>`;
         });
 
-        productResult.querySelector('#originalPrices').innerHTML = originalList + `<a href="${baseUrl}${handle}" target="_blank">View on Website</a>`;
-        productResult.querySelector('#markedUpPrices').innerHTML = markedUpList;
+        document.getElementById('originalPrices').innerHTML = originalList;
+        document.getElementById('markedUpPrices').innerHTML = markedUpList;
 
       } catch (err) {
-        productResult.querySelector('#originalPrices').innerHTML = `<p style="color:red;">${err.message}</p>`;
-        productResult.querySelector('#markedUpPrices').innerHTML = '';
+        document.getElementById('originalPrices').innerHTML = 'Error loading product';
       }
     }
 
