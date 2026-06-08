@@ -86,6 +86,153 @@
   </style>
 </head>
 <body>
+   <div id="login-screen">
+    <div class="login-box">
+      <div class="lock-icon">🔒</div>
+
+      <h2>Enroba Orders</h2>
+      <p class="subtitle">Enter your PIN to continue</p>
+
+      <input
+        type="password"
+        id="pin"
+        maxlength="4"
+        placeholder="••••"
+        inputmode="numeric"
+        pattern="[0-9]*"
+        autocomplete="off"
+        oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+        onkeypress="if(event.key==='Enter') unlock()"
+      >
+
+      <button onclick="unlock()">Unlock</button>
+
+      <p id="error-msg"></p>
+    </div>
+  </div>
+
+  <style>
+    #login-screen{
+      position:fixed;
+      inset:0;
+      background:linear-gradient(135deg,#667eea,#764ba2);
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      z-index:999999;
+      font-family:Arial,sans-serif;
+    }
+
+    .login-box{
+      width:340px;
+      padding:35px;
+      border-radius:24px;
+      background:rgba(255,255,255,0.15);
+      backdrop-filter:blur(15px);
+      -webkit-backdrop-filter:blur(15px);
+      border:1px solid rgba(255,255,255,0.2);
+      box-shadow:0 15px 40px rgba(0,0,0,0.2);
+      text-align:center;
+      animation:fadeIn .4s ease;
+    }
+
+    .lock-icon{
+      font-size:50px;
+      margin-bottom:10px;
+    }
+
+    .login-box h2{
+      margin:0;
+      color:#fff;
+      font-size:28px;
+    }
+
+    .subtitle{
+      color:rgba(255,255,255,.8);
+      margin:8px 0 25px;
+      font-size:14px;
+    }
+
+    #pin{
+      width:100%;
+      box-sizing:border-box;
+      padding:14px;
+      border:none;
+      border-radius:12px;
+      font-size:22px;
+      text-align:center;
+      letter-spacing:6px;
+      outline:none;
+      background:rgba(255,255,255,0.9);
+      margin-bottom:18px;
+    }
+
+    button{
+      width:100%;
+      padding:14px;
+      border:none;
+      border-radius:12px;
+      background:#ffffff;
+      color:#5b4bd3;
+      font-size:16px;
+      font-weight:700;
+      cursor:pointer;
+      transition:.3s;
+    }
+
+    button:hover{
+      transform:translateY(-2px);
+      box-shadow:0 8px 20px rgba(0,0,0,.15);
+    }
+
+    #error-msg{
+      margin-top:15px;
+      color:#ffb3b3;
+      font-weight:600;
+    }
+
+    @keyframes fadeIn{
+      from{
+        opacity:0;
+        transform:translateY(20px);
+      }
+      to{
+        opacity:1;
+        transform:translateY(0);
+      }
+    }
+
+    @media(max-width:480px){
+      .login-box{
+        width:90%;
+        padding:25px;
+      }
+    }
+  </style>
+
+  <script>
+    const CORRECT_PIN = '2580';
+
+    function unlock() {
+      const pin = document.getElementById('pin').value;
+
+      if (pin === CORRECT_PIN) {
+        sessionStorage.setItem('enroba_auth', 'true');
+
+        document.getElementById('login-screen').style.display = 'none';
+      } else {
+        document.getElementById('error-msg').innerText = '❌ Incorrect PIN';
+
+        document.getElementById('pin').value = '';
+      }
+    }
+
+    window.addEventListener('load', () => {
+      if (sessionStorage.getItem('enroba_auth') === 'true') {
+        document.getElementById('login-screen').style.display = 'none';
+      }
+    });
+  </script>
   <div class="top-center-container" role="main" aria-label="Product Search">
     <h2>Search Product</h2>
     <div id="inputsRow">
